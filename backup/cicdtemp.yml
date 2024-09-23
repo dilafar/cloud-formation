@@ -1,0 +1,55 @@
+Parameters:
+  KeyPair: 
+    Description: cicd stack key
+    Type: AWS::EC2::KeyPair::KeyName
+  MyIP:
+    Description: Assigning IP
+    Type: String
+    Default: 111.223.176.112/32
+Resources: 
+  S3RoleforCiCd:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+  JenkinsInst:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: S3RoleforCiCd 
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      Parameters:
+        KeyName: !Ref KeyPair
+        MyIP: !Ref MyIP
+  App01qa:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: JenkinsInst
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      Parameters:
+        KeyName: !Ref KeyPair
+        MyIP: !Ref MyIP
+  NexusServer:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: JenkinsInst
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      Parameters:
+        KeyName: !Ref KeyPair
+        MyIP: !Ref MyIP
+  SonarServer:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: JenkinsInst
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      Parameters:
+        KeyName: !Ref KeyPair
+        MyIP: !Ref MyIP
+  db01qa:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: App01qa
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      Parameters:
+        KeyName: !Ref KeyPair
+        MyIP: !Ref MyIP
+  
+

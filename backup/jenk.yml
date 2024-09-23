@@ -1,0 +1,96 @@
+Parameters:
+  RoleTempName:
+    Description: Name of the base stack with all infra resources
+    Type: String
+    Default: cicds3role
+  KeyName: 
+    Type: String
+  MyIP:
+    Type: String
+  InstanceType: 
+    Type: String
+    Default: t2.micro
+
+Mappings: 
+  AmiRegionMap: 
+    us-east-1:
+      AMI: ami-0ff8a91507f77f867
+    us-west-1:
+      AMI: ami-0bdb828fd58c52235
+
+Resources: 
+  JenkinsInstance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap 
+        - AmiRegionMap
+        - !Ref AWS::Region
+        - AMI
+      Tags:
+        - Key: "Name"
+          Value: !Join 
+            - ""
+            - - "Jenkins in "
+              - !Ref AWS::Region
+      SecurityGroups:
+        - !Ref JenkinsSecurityGroup
+      IamInstanceProfile:
+        Fn::ImportValue:
+          Fn::Sub: "${RoleTempName}-S3RoleProfileName"
+      UserData:
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash
+          sudo apt update
+          sudo apt install openjdk-17-jdk -y
+          sudo apt install maven git wget unzip -y
+          sudo apt install awscli -y
+          sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
+            https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+          echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]" \
+            https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+            /etc/apt/sources.list.d/jenkins.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install jenkins -y
+          sleep 10
+          systemctl stop jenkins
+          sleep 10
+          aws s3 cp s3://cicd-data/jenkins_cicdjobs.tar.gz /var/lib/
+          cd /var/lib/
+          tar xzvf jenkins_cicdjobs.tar.gz
+          chown jenkins.jenkins /var/lib/jenkins  -R
+          reboot
+
+  JenkinsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: JenkinsSecurityGroup
+      GroupDescription: Allow http and ssh from myip
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: !Ref MyIP
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIP
+
+Outputs:
+  MyInstancePublicIP:
+    Value: !GetAtt JenkinsInstance.PublicIp
+  MyInstancePrivateIP:
+    Value: !GetAtt JenkinsInstance.PrivateIp
+  MyEC2InstanceID:
+    Value: !Ref JenkinsInstance
+  JenkinsSecurityGroupId:
+    Description: Security Group ID
+    Value:  
+      Fn::GetAtt:
+        - JenkinsSecurityGroup
+        - GroupId
+    Export:
+      Name: jenk-SGID
