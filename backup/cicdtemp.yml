@@ -10,12 +10,12 @@ Resources:
   S3RoleforCiCd:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/cicds3role.yml
   JenkinsInst:
     Type: AWS::CloudFormation::Stack
     DependsOn: S3RoleforCiCd 
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/jenk.yml
       Parameters:
         KeyName: !Ref KeyPair
         MyIP: !Ref MyIP
@@ -23,7 +23,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: JenkinsInst
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/app01qa.yml
       Parameters:
         KeyName: !Ref KeyPair
         MyIP: !Ref MyIP
@@ -31,7 +31,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: JenkinsInst
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/nexus.yml
       Parameters:
         KeyName: !Ref KeyPair
         MyIP: !Ref MyIP
@@ -39,7 +39,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: JenkinsInst
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/sonar.yml
       Parameters:
         KeyName: !Ref KeyPair
         MyIP: !Ref MyIP
@@ -47,7 +47,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: App01qa
     Properties:
-      TemplateURL: https://s3.amazonaws.com/templates/stack-template
+      TemplateURL: https://s3.amazonaws.com/templates/stack-template/db01qa.yml
       Parameters:
         KeyName: !Ref KeyPair
         MyIP: !Ref MyIP
